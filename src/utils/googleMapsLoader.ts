@@ -29,14 +29,32 @@ export const loadGoogleMapsScript = (apiKey: string): Promise<void> => {
     scripts.forEach(script => script.remove());
 
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,places`;
+    // Updated to use loading=async for better performance and include visualization library for heatmaps
+    // places library is loaded dynamically in the component
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,marker,visualization&loading=async`;
     script.async = true;
     script.defer = true;
     
     script.onload = () => {
-      isLoaded = true;
-      isLoading = false;
-      resolve();
+      // Wait a bit for the API to fully initialize
+      let attempts = 0;
+      const maxAttempts = 50; // 5 seconds maximum wait
+      
+      const checkGoogleMaps = () => {
+        if (window.google && window.google.maps && window.google.maps.Map) {
+          isLoaded = true;
+          isLoading = false;
+          resolve();
+        } else if (attempts < maxAttempts) {
+          attempts++;
+          setTimeout(checkGoogleMaps, 100);
+        } else {
+          isLoading = false;
+          loadPromise = null;
+          reject(new Error('Google Maps API failed to initialize within timeout'));
+        }
+      };
+      checkGoogleMaps();
     };
     
     script.onerror = () => {

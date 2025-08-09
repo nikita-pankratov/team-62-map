@@ -84,7 +84,7 @@ const RatingFilter: React.FC<RatingFilterProps> = ({
         </div>
       </div>
       
-      <style jsx>{`
+      <style>{`
         .rating-slider::-webkit-slider-thumb {
           appearance: none;
           height: 20px;

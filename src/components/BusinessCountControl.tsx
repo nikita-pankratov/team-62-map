@@ -24,7 +24,7 @@ const BusinessCountControl: React.FC<BusinessCountControlProps> = ({
     onSearchRadiusChange(parseFloat(e.target.value));
   };
 
-  const businessCountOptions = [5, 10, 15, 20, 25, 30, 40, 50];
+  const businessCountOptions = [5, 10, 15, 20];
   const searchRadiusOptions = [1, 2, 3, 5, 8, 10, 15, 20];
 
   return (
@@ -80,8 +80,11 @@ const BusinessCountControl: React.FC<BusinessCountControlProps> = ({
           <p className="mb-1">
             <strong>Search Area:</strong> {searchRadius} mile{searchRadius !== 1 ? 's' : ''} from city center
           </p>
-          <p>
+          <p className="mb-1">
             <strong>Results:</strong> Up to {businessCount} businesses
+          </p>
+          <p className="text-amber-600 font-medium">
+            ⚠ Google API limits results to 20 maximum
           </p>
         </div>
       </div>
