@@ -20,34 +20,40 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [apiKey, setApiKey] = useState(currentApiKey)
   const [chatGPTKey, setChatGPTKey] = useState(currentChatGPTKey)
-  const [showApiKey, setShowApiKey] = useState(false)
   const [showChatGPTKey, setShowChatGPTKey] = useState(false)
 
-  // Initialize form fields with localStorage values when modal opens
+  // Initialize form fields with current values when modal opens
   useEffect(() => {
     if (isOpen) {
-      const savedApiKey = localStorage.getItem('googleMapsApiKey') || currentApiKey
-      const savedChatGPTKey = localStorage.getItem('chatGPTApiKey') || currentChatGPTKey
+      setApiKey(currentApiKey)
+      // Check if ChatGPT key is set in environment variables
+      const envChatGPTKey = import.meta.env.VITE_CHATGPT_API_KEY;
+      const hasEnvChatGPTKey = envChatGPTKey && envChatGPTKey.trim() !== '';
       
-      setApiKey(savedApiKey)
-      setChatGPTKey(savedChatGPTKey)
+      if (hasEnvChatGPTKey) {
+        // Use environment variable value
+        setChatGPTKey(envChatGPTKey)
+      } else {
+        // Allow user to set their own value
+        setChatGPTKey(currentChatGPTKey || '')
+      }
     }
   }, [isOpen, currentApiKey, currentChatGPTKey])
 
   if (!isOpen) return null
 
   const handleSave = () => {
-    // Save to localStorage for persistence
-    if (apiKey.trim()) {
-      localStorage.setItem('googleMapsApiKey', apiKey)
-    } else {
-      localStorage.removeItem('googleMapsApiKey')
-    }
+    // Check if ChatGPT key is set in environment variables
+    const envChatGPTKey = import.meta.env.VITE_CHATGPT_API_KEY;
+    const hasEnvChatGPTKey = envChatGPTKey && envChatGPTKey.trim() !== '';
     
-    if (chatGPTKey.trim()) {
-      localStorage.setItem('chatGPTApiKey', chatGPTKey)
-    } else {
-      localStorage.removeItem('chatGPTApiKey')
+    if (!hasEnvChatGPTKey) {
+      // Save to localStorage for user-set ChatGPT key
+      if (chatGPTKey.trim()) {
+        localStorage.setItem('chatGPTApiKey', chatGPTKey)
+      } else {
+        localStorage.removeItem('chatGPTApiKey')
+      }
     }
     
     onApiKeyChange(apiKey)
@@ -60,6 +66,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     if (key.length <= 8) return '*'.repeat(key.length)
     return key.slice(0, 4) + '*'.repeat(key.length - 8) + key.slice(-4)
   }
+
+  // Check if ChatGPT key is set in environment variables
+  const envChatGPTKey = import.meta.env.VITE_CHATGPT_API_KEY;
+  const hasEnvChatGPTKey = envChatGPTKey && envChatGPTKey.trim() !== '';
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -97,23 +107,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <Key className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                   <input
                     id="googleApiKey"
-                    type={showApiKey ? 'text' : 'password'}
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder={currentApiKey ? maskKey(currentApiKey) : "Enter your Google Maps API key"}
-                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    type="password"
+                    value={currentApiKey ? '••••••••••••••••••••••••••••••••' : ''}
+                    placeholder="API key loaded from environment"
+                    className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                    disabled={true}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowApiKey(!showApiKey)}
-                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                  >
-                    {showApiKey ? '👁️' : '👁️‍🗨️'}
-                  </button>
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
                   Required for Google Maps functionality and business search
                 </p>
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <p className="text-xs text-blue-700">
+                    <strong>Environment Variable:</strong> This value is loaded from <code className="bg-blue-100 px-1 rounded">VITE_GOOGLE_MAPS_API_KEY</code> in your <code className="bg-blue-100 px-1 rounded">.env</code> file.
+                  </p>
+                </div>
               </div>
 
               {/* ChatGPT API Key */}
@@ -129,12 +137,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     value={chatGPTKey}
                     onChange={(e) => setChatGPTKey(e.target.value)}
                     placeholder={currentChatGPTKey ? maskKey(currentChatGPTKey) : "Enter your ChatGPT API key"}
-                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`w-full pl-10 pr-12 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      hasEnvChatGPTKey ? 'bg-gray-50' : 'bg-white'
+                    }`}
+                    disabled={hasEnvChatGPTKey}
                   />
                   <button
                     type="button"
                     onClick={() => setShowChatGPTKey(!showChatGPTKey)}
                     className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                    disabled={hasEnvChatGPTKey}
                   >
                     {showChatGPTKey ? '👁️' : '👁️‍🗨️'}
                   </button>
@@ -142,20 +154,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <p className="mt-1 text-xs text-gray-500">
                   Required for AI-powered business gap analysis
                 </p>
+                {hasEnvChatGPTKey ? (
+                  <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <p className="text-xs text-blue-700">
+                      <strong>Environment Variable:</strong> This value is loaded from <code className="bg-blue-100 px-1 rounded">VITE_CHATGPT_API_KEY</code> in your <code className="bg-blue-100 px-1 rounded">.env</code> file.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <p className="text-xs text-yellow-700">
+                      <strong>User Setting:</strong> This key will be saved in your browser's localStorage for this session.
+                    </p>
+                  </div>
+                )}
               </div>
 
-              {/* Security Notice */}
-              <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+              {/* Environment Variables Notice */}
+              <div className="bg-green-50 border border-green-200 rounded-md p-4">
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-blue-800">Security Notice</h3>
-                    <div className="mt-2 text-sm text-blue-700">
-                      <p>Your API keys are stored securely and only used for the services you've authorized.</p>
+                    <h3 className="text-sm font-medium text-green-800">Environment Variables</h3>
+                    <div className="mt-2 text-sm text-green-700">
+                      <p>API keys are now managed through environment variables for better security. Create a <code className="bg-green-100 px-1 rounded">.env</code> file in the project root with your API keys.</p>
                     </div>
                   </div>
                 </div>
@@ -168,10 +193,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <button
               type="button"
               onClick={handleSave}
-              className="w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+              className={`w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium sm:ml-3 sm:w-auto sm:text-sm ${
+                hasEnvChatGPTKey 
+                  ? 'bg-gray-400 text-white cursor-not-allowed' 
+                  : 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+              }`}
+              disabled={hasEnvChatGPTKey}
             >
               <Save className="h-4 w-4 mr-2" />
-              Save Settings
+              {hasEnvChatGPTKey ? 'Read Only' : 'Save Settings'}
             </button>
             <button
               type="button"

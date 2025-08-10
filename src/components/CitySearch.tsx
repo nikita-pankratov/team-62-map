@@ -16,7 +16,7 @@ interface PlacePrediction {
 }
 
 const CitySearch: React.FC<CitySearchProps> = ({ onCitySelect, apiKey }) => {
-  const [searchQuery, setSearchQuery] = useState('San Diego, CA, USA');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -24,7 +24,6 @@ const CitySearch: React.FC<CitySearchProps> = ({ onCitySelect, apiKey }) => {
   const [error, setError] = useState('');
   const [isApiReady, setIsApiReady] = useState(false);
   const [debounceTimer, setDebounceTimer] = useState<number | null>(null);
-  const [hasAutoSearched, setHasAutoSearched] = useState(false);
 
   // Check if Google Maps API is ready and dynamically load Places library
   useEffect(() => {
@@ -196,13 +195,7 @@ const CitySearch: React.FC<CitySearchProps> = ({ onCitySelect, apiKey }) => {
     }
   }, [apiKey, onCitySelect]);
 
-  // Auto-search for San Diego when API is ready (for testing)
-  useEffect(() => {
-    if (isApiReady && apiKey && !hasAutoSearched && searchQuery === 'San Diego, CA, USA') {
-      setHasAutoSearched(true);
-      geocodeCity(searchQuery);
-    }
-  }, [isApiReady, apiKey, hasAutoSearched, searchQuery, geocodeCity]);
+
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
@@ -247,7 +240,7 @@ const CitySearch: React.FC<CitySearchProps> = ({ onCitySelect, apiKey }) => {
                 ? "API key required..."
                 : !isApiReady 
                   ? "Loading Google Maps..." 
-                  : "Enter city / county / region name (e.g., New York, Chicago County)"
+                  : "Enter city / county / region name (e.g., New York, Los Angeles, Chicago)"
             }
             className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-sm"
             disabled={isSearching || !apiKey || !isApiReady}

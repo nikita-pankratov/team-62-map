@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { MapPin } from 'lucide-react';
 import CitySearch from './components/CitySearch';
 import BusinessSearch from './components/BusinessSearch';
 import CollapsibleControls from './components/CollapsibleControls';
@@ -12,6 +11,7 @@ import { type OverlapResult } from './utils/geographicUtils';
 import { type DemographicsData, type DemographicsError } from './utils/demographicsUtils';
 import { createChatGPTService, type GapAnalysisResult, type AnalysisInput } from './utils/chatgptService';
 import { MapScreenshotService } from './utils/mapScreenshotService';
+import { getGoogleMapsApiKey, getChatGPTApiKey, logEnvironmentStatus } from './utils/env';
 
 interface Business {
   place_id: string;
@@ -29,9 +29,13 @@ interface Business {
 function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [apiKey, setApiKey] = useState('');
-  const [chatGPTKey, setChatGPTKey] = useState('');
-  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
+  const [apiKey, setApiKey] = useState(getGoogleMapsApiKey());
+  const [chatGPTKey, setChatGPTKey] = useState(getChatGPTApiKey());
+  // Set default center to US center
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>({
+    lat: 39.8283,
+    lng: -98.5795
+  });
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [businessType, setBusinessType] = useState<string>('');
   const [searchTrigger, setSearchTrigger] = useState<number>(0);
@@ -59,16 +63,19 @@ function App() {
 
   const [mapInstanceRef, setMapInstanceRef] = useState<google.maps.Map | null>(null);
 
-  // Initialize API keys from localStorage on component mount
+  // Log environment status in development
   useEffect(() => {
-    const savedApiKey = localStorage.getItem('googleMapsApiKey');
-    if (savedApiKey) {
-      setApiKey(savedApiKey);
-    }
+    logEnvironmentStatus();
+  }, []);
 
-    const savedChatGPTKey = localStorage.getItem('chatGPTApiKey');
-    if (savedChatGPTKey) {
-      setChatGPTKey(savedChatGPTKey);
+  // Load ChatGPT key from localStorage if not set in environment
+  useEffect(() => {
+    const envChatGPTKey = getChatGPTApiKey();
+    if (!envChatGPTKey) {
+      const savedChatGPTKey = localStorage.getItem('chatGPTApiKey');
+      if (savedChatGPTKey) {
+        setChatGPTKey(savedChatGPTKey);
+      }
     }
   }, []);
 
@@ -244,40 +251,30 @@ function App() {
       <div className="flex-1 flex min-h-0 relative">
         {/* Map Area */}
         <div className="flex-1 relative">
-          {apiKey ? (
-            <GoogleMap 
-              apiKey={apiKey} 
-              center={mapCenter || undefined}
-              cityName={selectedCity || undefined}
-              businessType={businessType || undefined}
-              searchTrigger={searchTrigger}
-              searchRadius={searchRadius}
-              showCircles={showCircles}
-              minRating={minRating}
-              useRatingFilter={useRatingFilter}
-              businessCount={businessCount}
-              businessSearchRadius={businessSearchRadius}
-              showHeatmap={showHeatmap}
-              recommendations={gapAnalysisResult?.recommendations || []}
-              onBusinessesFound={handleBusinessesFound}
-              onSearchStart={handleSearchStart}
-              onSearchComplete={handleSearchComplete}
-              onOverlapsDetected={handleOverlapsDetected}
-              onMapCenterChanged={handleMapCenterChanged}
-              onBusinessSelect={handleBusinessSelect}
-              onHeatmapToggle={handleHeatmapToggle}
-              onRecommendationSelect={handleRecommendationSelect}
-              onMapInstanceReady={handleMapInstanceReady}
-            />
-          ) : (
-            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-              <div className="text-center">
-                <MapPin className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-medium text-gray-600 mb-2">Ready for Your API Key</h3>
-                <p className="text-gray-500">Enter your Google Maps API key above to load the interactive map</p>
-              </div>
-            </div>
-          )}
+          <GoogleMap 
+            apiKey={apiKey || ''} 
+            center={mapCenter || undefined}
+            cityName={selectedCity || undefined}
+            businessType={businessType || undefined}
+            searchTrigger={searchTrigger}
+            searchRadius={searchRadius}
+            showCircles={showCircles}
+            minRating={minRating}
+            useRatingFilter={useRatingFilter}
+            businessCount={businessCount}
+            businessSearchRadius={businessSearchRadius}
+            showHeatmap={showHeatmap}
+            recommendations={gapAnalysisResult?.recommendations || []}
+            onBusinessesFound={handleBusinessesFound}
+            onSearchStart={handleSearchStart}
+            onSearchComplete={handleSearchComplete}
+            onOverlapsDetected={handleOverlapsDetected}
+            onMapCenterChanged={handleMapCenterChanged}
+            onBusinessSelect={handleBusinessSelect}
+            onHeatmapToggle={handleHeatmapToggle}
+            onRecommendationSelect={handleRecommendationSelect}
+            onMapInstanceReady={handleMapInstanceReady}
+          />
         </div>
         
         {/* Tabbed Sidebar */}

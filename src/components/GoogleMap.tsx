@@ -162,7 +162,8 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
 
       try {
         mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
-          zoom: center ? 10 : 4,
+          // zoom: center ? 5 : 10, // Zoom out to show whole US by default, zoom in for cities
+          zoom: cityName ? 12 : 5, // Zoom out to show whole US by default, zoom in for cities
           center: mapCenter,
           mapId: 'cf4b184591b2eb8439f0861c', // Required for Advanced Markers - styles controlled via Cloud Console
           mapTypeId: window.google.maps.MapTypeId?.ROADMAP || 'roadmap',
@@ -295,7 +296,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
     if (mapInstanceRef.current && markerRef.current && infoWindowRef.current) {
       // Update map center and zoom
       mapInstanceRef.current.setCenter(mapCenter);
-      mapInstanceRef.current.setZoom(center ? 10 : 4);
+      mapInstanceRef.current.setZoom(center ? 10 : 3); // Zoom out to show whole US by default, zoom in for cities
       
       // Update marker position - handle both AdvancedMarkerElement and legacy Marker
       if (markerRef.current instanceof window.google.maps.marker.AdvancedMarkerElement) {
@@ -1199,14 +1200,21 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
 
   if (error) {
     const isQuotaError = error.includes('quota') || error.includes('API quota limits');
+    const isApiKeyError = error.includes('API key');
+    
     return (
-      <div className={`w-full h-96 ${isQuotaError ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200'} border rounded-lg flex items-center justify-center`}>
+      <div className={`w-full h-96 ${isQuotaError ? 'bg-yellow-50 border-yellow-200' : isApiKeyError ? 'bg-blue-50 border-blue-200' : 'bg-red-50 border-red-200'} border rounded-lg flex items-center justify-center`}>
         <div className="text-center">
-          <AlertCircle className={`h-12 w-12 ${isQuotaError ? 'text-yellow-500' : 'text-red-500'} mx-auto mb-4`} />
-          <p className={`${isQuotaError ? 'text-yellow-700' : 'text-red-700'} font-medium`}>{error}</p>
+          <AlertCircle className={`h-12 w-12 ${isQuotaError ? 'text-yellow-500' : isApiKeyError ? 'text-blue-500' : 'text-red-500'} mx-auto mb-4`} />
+          <p className={`${isQuotaError ? 'text-yellow-700' : isApiKeyError ? 'text-blue-700' : 'text-red-700'} font-medium`}>{error}</p>
           {isQuotaError && (
             <p className="text-yellow-600 text-sm mt-2">
               Searches will resume automatically. Try moving the map less frequently to avoid this issue.
+            </p>
+          )}
+          {isApiKeyError && (
+            <p className="text-blue-600 text-sm mt-2">
+              Click the settings icon in the top navigation to add your Google Maps API key.
             </p>
           )}
         </div>
