@@ -152,6 +152,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
   const displayName = cityName || 'Geographic Center of the United States';
 
   useEffect(() => {
+    console.log('GoogleMap useEffect - apiKey:', apiKey ? 'SET' : 'NOT SET', 'length:', apiKey?.length);
     if (!apiKey) {
       setError('Please provide a valid Google Maps API key');
       return;

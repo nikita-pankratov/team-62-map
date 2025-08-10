@@ -29,8 +29,23 @@ interface Business {
 function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [apiKey, setApiKey] = useState(getGoogleMapsApiKey());
-  const [chatGPTKey, setChatGPTKey] = useState(getChatGPTApiKey());
+  const [apiKey, setApiKey] = useState(() => {
+    // Try environment variable first, then localStorage as fallback
+    const envKey = getGoogleMapsApiKey();
+    if (envKey) return envKey;
+    
+    const localKey = localStorage.getItem('googleMapsApiKey');
+    return localKey || '';
+  });
+  
+  const [chatGPTKey, setChatGPTKey] = useState(() => {
+    // Try environment variable first, then localStorage as fallback
+    const envKey = getChatGPTApiKey();
+    if (envKey) return envKey;
+    
+    const localKey = localStorage.getItem('chatGPTApiKey');
+    return localKey || '';
+  });
   // Set default center to US center
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>({
     lat: 39.8283,
@@ -63,21 +78,29 @@ function App() {
 
   const [mapInstanceRef, setMapInstanceRef] = useState<google.maps.Map | null>(null);
 
-  // Log environment status in development
+  // Log environment status in development and save env API keys to localStorage
   useEffect(() => {
     logEnvironmentStatus();
-  }, []);
-
-  // Load ChatGPT key from localStorage if not set in environment
-  useEffect(() => {
+    console.log('App useEffect - apiKey from env:', getGoogleMapsApiKey() ? 'SET' : 'NOT SET', 'length:', getGoogleMapsApiKey()?.length);
+    
+    // Save environment API keys to localStorage for compatibility
+    const envGoogleApiKey = getGoogleMapsApiKey();
     const envChatGPTKey = getChatGPTApiKey();
-    if (!envChatGPTKey) {
-      const savedChatGPTKey = localStorage.getItem('chatGPTApiKey');
-      if (savedChatGPTKey) {
-        setChatGPTKey(savedChatGPTKey);
-      }
+    
+    if (envGoogleApiKey) {
+      localStorage.setItem('googleMapsApiKey', envGoogleApiKey);
+      setApiKey(envGoogleApiKey); // Update state with environment key
+      console.log('Saved Google Maps API key to localStorage');
+    }
+    
+    if (envChatGPTKey) {
+      localStorage.setItem('chatGPTApiKey', envChatGPTKey);
+      setChatGPTKey(envChatGPTKey); // Update state with environment key
+      console.log('Saved ChatGPT API key to localStorage');
     }
   }, []);
+
+
 
   const handleCitySelect = (lat: number, lng: number, cityName: string) => {
     setMapCenter({ lat, lng });

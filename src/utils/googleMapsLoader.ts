@@ -4,7 +4,7 @@ let loadPromise: Promise<void> | null = null;
 
 export const loadGoogleMapsScript = (apiKey: string): Promise<void> => {
   // If already loaded, resolve immediately
-  if (isLoaded && window.google && window.google.maps) {
+  if (isLoaded && window.google && window.google.maps && typeof window.google.maps.importLibrary === 'function') {
     return Promise.resolve();
   }
 
@@ -15,7 +15,7 @@ export const loadGoogleMapsScript = (apiKey: string): Promise<void> => {
 
   // Check if script already exists in DOM
   const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
-  if (existingScript && window.google && window.google.maps) {
+  if (existingScript && window.google && window.google.maps && typeof window.google.maps.importLibrary === 'function') {
     isLoaded = true;
     return Promise.resolve();
   }
@@ -29,9 +29,8 @@ export const loadGoogleMapsScript = (apiKey: string): Promise<void> => {
     scripts.forEach(script => script.remove());
 
     const script = document.createElement('script');
-    // Updated to use loading=async for better performance and include visualization library for heatmaps
-    // places library is loaded dynamically in the component
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,marker,visualization&loading=async`;
+    // Use the new Google Maps API format with dynamic loading
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,marker,visualization&loading=async&v=beta`;
     script.async = true;
     script.defer = true;
     
@@ -41,7 +40,7 @@ export const loadGoogleMapsScript = (apiKey: string): Promise<void> => {
       const maxAttempts = 50; // 5 seconds maximum wait
       
       const checkGoogleMaps = () => {
-        if (window.google && window.google.maps && window.google.maps.Map) {
+        if (window.google && window.google.maps && window.google.maps.Map && typeof window.google.maps.importLibrary === 'function') {
           isLoaded = true;
           isLoading = false;
           resolve();
